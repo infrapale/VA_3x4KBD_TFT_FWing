@@ -22,6 +22,10 @@
 #include "secrets.h"
 //#include "sens_db.h"
 #include <rfm69_support.h>
+
+#include <Adafruit_Sensor.h>
+#include "Adafruit_BME680.h"
+
 #include "light_msg.h"
 #include "akbd.h"
 #include "TaHa.h" 
@@ -104,6 +108,7 @@ uint8_t show_from=0;
 uint8_t insert_at=0;
 unsigned long show_menu_millis;
 boolean menu_is_active;
+Adafruit_BME680 bme; // I2C
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 // Singleton instance of the radio driver
 Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
@@ -132,7 +137,7 @@ TaHa taha_btn_scan;
 TaHa taha_menu;
 TaHa radio_send_handle;
 TaHa radio_receive_handle;
-//TaHa display_handle;
+TaHa display_handle;
 TaHa local_sensor_handle;
 /**
  * @brief  Scan Analog Keyboard, pressed keys are stored in object buffer
@@ -179,6 +184,18 @@ void setup() {
   for(uint8_t i = 0;i < KBD_NBR_KEYS; i++){ 
       kbd3x4.set_aval(i, kbd_values[i]);
   }
+
+  if (!bme.begin(0x76)) {
+    Serial.println("Could not find a valid BME680 sensor, check wiring!");
+    while (1);
+  }
+  // Set up oversampling and filter initialization
+  bme.setTemperatureOversampling(BME680_OS_8X);
+  bme.setHumidityOversampling(BME680_OS_2X);
+  bme.setPressureOversampling(BME680_OS_4X);
+  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  bme.setGasHeater(320, 150); // 320*C for 150 ms
+
   tft.begin();
   if (!ts.begin()) { 
     Serial.println("Unable to start touchscreen.");
@@ -210,6 +227,8 @@ void setup() {
    
   taha_kbd_scan.set_interval(10,RUN_RECURRING, scan_kbd);
   radio_send_handle.set_interval(500,RUN_RECURRING, radio_tx_handler);
+  display_handle.set_interval(5000,RUN_RECURRING, update_display);
+  
   //radio_receive_handle.set_interval(500,RUN_RECURRING, radio_rx_handler);
   //local_sensor_handle.set_interval(5000,RUN_RECURRING, read_local_sensors);
 
@@ -229,6 +248,7 @@ void loop() {
   radio_send_handle.run();
   radio_receive_handle.run();
   local_sensor_handle.run();
+  display_handle.run();
   
   btn = kbd3x4.read();
   if (btn) {
@@ -260,17 +280,24 @@ void loop() {
       else {
         update_display();
       }
-
+    
       if (strstr((char *)buf, "Hello World")) {
         // Send a reply!
         uint8_t data[] = "And hello back to you";
         //rfm69.send(data, sizeof(data));
         //rfm69.waitPacketSent();
         Serial.println("Sent a reply");
-        Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
+        //Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
       }
     } else {
       Serial.println("Receive failed");
     }
-
+    
+    
+    if (bme.performReading()) 
+    {
+        Serial.print("Temperature = ");
+        Serial.print(bme.temperature);
+        Serial.println(" *C");         
+    }
 }

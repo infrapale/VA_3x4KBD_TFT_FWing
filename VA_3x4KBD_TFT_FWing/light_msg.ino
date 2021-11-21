@@ -1,6 +1,7 @@
 #include "arduino.h"
 
 #include "light_msg.h"
+#include "sens_db.h"
 
 #define MSG_BUF_LEN 32
 #define MSG_BUF_LEN_MASK 0b00011111;
@@ -10,6 +11,8 @@ struct msg_buf_struct {
   char zone[ZONE_LEN];  // ring buffer
   char func[FUNC_LEN];
 } msg_buf[MSG_BUF_LEN];  
+
+extern sensor_entry_st collect_sens[NBR_COLLECTED_SENSORS];
 
 byte buf_wr_indx;
 byte buf_rd_indx;
@@ -197,7 +200,9 @@ void AddRow( char *txt){
    Serial.println(txt);
 }
 
-void update_display(void){
+void update_display(void)
+{
+  Serial.println("update_display");
   tft.fillScreen(ILI9341_BLACK);
   tft.setCursor(0, 30);
   tft.setTextColor(ILI9341_RED); 

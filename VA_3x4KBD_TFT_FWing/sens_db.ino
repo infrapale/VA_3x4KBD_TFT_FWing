@@ -1,16 +1,9 @@
-#define NBR_COLLECTED_SENSORS 3
+#include "sens_db.h"
 // {"Z":"Dock","S":"P_bmp180","V":997.00,"R":""}
 
-struct sensor_entry {
-    String name;
-    String zone;
-    String sensor;
-    float value;  
-};
+sensor_entry_st sensor_info;
 
-typedef struct sensor_entry sensor_info;
-
-sensor_info collect_sens[NBR_COLLECTED_SENSORS] = {
+sensor_entry_st collect_sens[NBR_COLLECTED_SENSORS] = {
     {"Tupa","Tupa","Temp",24.2},
     {"Ulko","OD_1","Temp",22.1},
     {"Vesi","Dock","Temp",16.0}
