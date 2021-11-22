@@ -27,6 +27,7 @@
 #include "Adafruit_BME680.h"
 
 #include "light_msg.h"
+#include "sens_db.h"
 #include "akbd.h"
 #include "TaHa.h" 
 
@@ -130,6 +131,7 @@ uint16_t kbd_values[KBD_NBR_KEYS] = {
 };
 uint16_t btn_values[BTN_NBR_BTNS] = {707,917,420};
 float sensor_value[3] = { 24.1, -5.5, 4.5 };  //indoor -outdoor -water
+extern sensor_entry_st collect_sens[NBR_COLLECTED_SENSORS];
 
 // Task handler definitions
 TaHa taha_kbd_scan;
@@ -227,10 +229,10 @@ void setup() {
    
   taha_kbd_scan.set_interval(10,RUN_RECURRING, scan_kbd);
   radio_send_handle.set_interval(500,RUN_RECURRING, radio_tx_handler);
-  display_handle.set_interval(5000,RUN_RECURRING, update_display);
+  display_handle.set_interval(30000,RUN_RECURRING, update_display);
   
   //radio_receive_handle.set_interval(500,RUN_RECURRING, radio_rx_handler);
-  //local_sensor_handle.set_interval(5000,RUN_RECURRING, read_local_sensors);
+  local_sensor_handle.set_interval(30000,RUN_RECURRING, read_local_sensors);
 
  
 }
@@ -300,4 +302,17 @@ void loop() {
         Serial.print(bme.temperature);
         Serial.println(" *C");         
     }
+}
+
+
+void read_local_sensors(void)
+{
+    if (bme.performReading())
+    {
+        collect_sens[0].value = bme.temperature;
+        collect_sens[1].value = bme.humidity;
+        collect_sens[2].value = bme.gas_resistance / 1000.0;
+        
+    }
+       
 }

@@ -9,6 +9,8 @@ typedef struct{
     String zone;
     String sensor;
     float value;  
+    String unit;
+    uint8_t nbr_decimals;
 } sensor_entry_st;
 
 #endif

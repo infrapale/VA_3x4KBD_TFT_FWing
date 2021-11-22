@@ -4,10 +4,12 @@
 sensor_entry_st sensor_info;
 
 sensor_entry_st collect_sens[NBR_COLLECTED_SENSORS] = {
-    {"Tupa","Tupa","Temp",24.2},
-    {"Ulko","OD_1","Temp",22.1},
-    {"Vesi","Dock","Temp",16.0}
+    {"Tupa","Tupa","Temp",24.2,"C",1},
+    {"Hum","OD_1","Temp",22.1,"%",0},
+    {"Gas","Dock","Temp",16.0,"kohm",0}
 };
+
+// " hPa"
 
 void test_sens_db(void){
     Serial.println("Test sens_db");
