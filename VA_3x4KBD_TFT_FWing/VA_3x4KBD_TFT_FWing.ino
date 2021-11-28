@@ -21,7 +21,8 @@
 #include <Fonts/FreeSerif9pt7b.h>
 #include "secrets.h"
 //#include "sens_db.h"
-#include <rfm69_support.h>
+//#include <RH_RF69.h>
+#include "radio433.h"
 
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BME680.h"
@@ -79,16 +80,6 @@
 #endif
 
 
-/*
- * RFM69 Definitions for the M0+RFM69 Feather
- */
-#define FREQUENCY     RF69_434MHZ
-#define RFM69_CS      8
-#define RFM69_INT     3
-#define RFM69_RST     4
-#define RFM69_FREQ    434.0 
-#define RFM69_TX_IVAL_100ms  20;
-
    
 #define KBD_NBR_KEYS       12
 #define BTN_NBR_BTNS       3
@@ -111,7 +102,6 @@ unsigned long show_menu_millis;
 boolean menu_is_active;
 Adafruit_BME680 bme; // I2C
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
-// Singleton instance of the radio driver
 Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
 int16_t packetnum = 0;  // packet counter, we increment per xmission
 
@@ -198,30 +188,7 @@ void setup() {
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 
-  tft.begin();
-  if (!ts.begin()) { 
-    Serial.println("Unable to start touchscreen.");
-  } 
-  else { 
-    Serial.println("Touchscreen started."); 
-  }
-  show_menu_millis = millis();
-  menu_is_active = false;
-  tft.setRotation(1);
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setCursor(0, 24);
-  tft.setTextColor(ILI9341_WHITE);  
-  //tft.setTextSize(1);
-  tft.setFont(&FreeSerif24pt7b);
-  //tft.setFont(&FreeMonoBoldOblique12pt7b);
-  tft.println("VA_3x4KBD_");
-  tft.println("TFT_FWing");
-  tft.print("2021");
-  
-  //tft.print("RST pin = "); tft.println(RFM69_RST,DEC);
-  //tft.print("CS pin = ");tft.println(RFM69_CS,DEC);
-  //tft.print("INT pin = ");tft.println(RFM69_INT,DEC);
-  
+  display_init();
   
   /*
    * Define task execution
@@ -231,7 +198,7 @@ void setup() {
   radio_send_handle.set_interval(500,RUN_RECURRING, radio_tx_handler);
   display_handle.set_interval(30000,RUN_RECURRING, update_display);
   
-  //radio_receive_handle.set_interval(500,RUN_RECURRING, radio_rx_handler);
+  radio_receive_handle.set_interval(10,RUN_RECURRING, radio_rx_handler);
   local_sensor_handle.set_interval(30000,RUN_RECURRING, read_local_sensors);
 
  
@@ -246,64 +213,50 @@ void loop() {
   
   taha_kbd_scan.run();
   taha_btn_scan.run();
-  taha_menu.run();
   radio_send_handle.run();
   radio_receive_handle.run();
   local_sensor_handle.run();
   display_handle.run();
-  
+
   btn = kbd3x4.read();
   if (btn) {
     //Serial.println(btn);uint16_t aval = kbd3x4.rd_analog(); Serial.println(aval);
     act_on_kbd3x4(btn);
   }
 
-     if (radio_check_available_msg()) {
-    // Should be a message for us now   
-    char buf[RH_RF69_MAX_MESSAGE_LEN];
-    uint8_t len = sizeof(buf);
-    len = radio_read_msg(buf, RH_RF69_MAX_MESSAGE_LEN);
-    //if (rf69.recv(buf, &len)) {
-    if (len>0)
-      if (!len) return;
-      buf[len] = 0;
-      Serial.print("Received [");
-      Serial.print(len);
-      Serial.print("]: ");
-      Serial.println((char*)buf);
-      //Serial.print("RSSI: ");
-      //Serial.println(rfm69.lastRssi(), DEC);
-      AddRow((char*)buf);
-      parse_msg((char*)buf);
-      //printMsgLog();
-      if( show_menu_millis > millis()){
-        //show_menu();
-      }
-      else {
-        update_display();
-      }
-    
-      if (strstr((char *)buf, "Hello World")) {
-        // Send a reply!
-        uint8_t data[] = "And hello back to you";
-        //rfm69.send(data, sizeof(data));
-        //rfm69.waitPacketSent();
-        Serial.println("Sent a reply");
-        //Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
-      }
-    } else {
-      Serial.println("Receive failed");
-    }
-    
-    
+    /*
     if (bme.performReading()) 
     {
         Serial.print("Temperature = ");
         Serial.print(bme.temperature);
         Serial.println(" *C");         
     }
+    */
 }
 
+void radio_rx_handler(void)
+{
+     // Should be a message for us now   
+      char buf[RADIO433_MAX_MSG_LEN+1];
+      uint8_t len = sizeof(buf);
+  
+      len = radio_read_msg(buf, RADIO433_MAX_MSG_LEN);
+      //if (rf69.recv(buf, &len)) {
+      if (len>0)
+      {
+          buf[len] = 0;
+          Serial.print("Received [");
+          Serial.print(len);
+          Serial.print("]: ");
+          Serial.println((char*)buf);
+          //Serial.print("RSSI: ");
+          //Serial.println(rfm69.lastRssi(), DEC);
+          AddRow((char*)buf);
+          parse_msg((char*)buf);
+          //printMsgLog();
+ 
+     } 
+}
 
 void read_local_sensors(void)
 {
@@ -311,7 +264,6 @@ void read_local_sensors(void)
     {
         collect_sens[0].value = bme.temperature;
         collect_sens[1].value = bme.humidity;
-        collect_sens[2].value = bme.gas_resistance / 1000.0;
         
     }
        

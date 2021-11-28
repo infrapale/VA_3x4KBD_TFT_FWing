@@ -2,6 +2,7 @@
 
 #include "light_msg.h"
 #include "sens_db.h"
+#include "radio433.h"
 
 #define MSG_BUF_LEN 32
 #define MSG_BUF_LEN_MASK 0b00011111;
@@ -142,13 +143,11 @@ void act_on_kbd3x4(char btn){
  * @retval
  */
 void radiate_msg( const char *zone, const char *relay_addr, char *func ) {
-    char rf69_packet[RH_RF69_MAX_MESSAGE_LEN];
-    if (json_char_array(rf69_packet, RH_RF69_MAX_MESSAGE_LEN, zone, relay_addr, func, "") > 0)
+    char rf69_packet[RADIO433_MAX_MSG_LEN+1];
+    if (json_char_array(rf69_packet, RADIO433_MAX_MSG_LEN, zone, relay_addr, func, "") > 0)
     {
       radio_send_msg(rf69_packet);
-      Serial.println(rf69_packet);
-      
-     
+      Serial.println(rf69_packet);    
     }
     else 
     {
@@ -167,21 +166,9 @@ void radio_tx_handler(void){
         Serial.println(msg_buf[buf_rd_indx].code);
         msg_buf[buf_rd_indx].zone[0] = 0;
         msg_buf[buf_rd_indx].code[0] = 0;
-        msg_buf[buf_rd_indx].code[0] = 0;
         buf_rd_indx = ++buf_rd_indx & MSG_BUF_LEN_MASK; 
         radio_send_handle.delay_task(2000);
     }
-}
-
-void show_menu(){
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setCursor(0, 30);
-  tft.setTextColor(ILI9341_RED); 
-  tft.setFont(&FreeSerif24pt7b); 
-  tft.setTextColor(ILI9341_LIGHTGREY);
-  tft.println("Menu is under");
-  tft.println("construction");
-  
 }
 
 void AddRow( char *txt){

@@ -1,12 +1,15 @@
 #include "sens_db.h"
 // {"Z":"Dock","S":"P_bmp180","V":997.00,"R":""}
+#define MSG_ATTRIBUTES 4
 
 sensor_entry_st sensor_info;
 
 sensor_entry_st collect_sens[NBR_COLLECTED_SENSORS] = {
-    {"Tupa","Tupa","Temp",24.2,"C",1},
-    {"Hum","OD_1","Temp",22.1,"%",0},
-    {"Gas","Dock","Temp",16.0,"kohm",0}
+    {"Tupa ","Tupa","Temp",24.2,"C",1},
+    {"Kost ","Tupa","Temp",22.1,"%",0},
+    {"Ulko ","OD_1","Temp",-1.0,"C",1},
+    {"Paine","OD_1","P_mb",990.0,"mBar",0}
+    
 };
 
 // " hPa"
@@ -24,7 +27,7 @@ void test_sens_db(void){
         Serial.println();
     }
 }
-#define MSG_ATTRIBUTES 4
+
 void parse_msg(char *rad_msg){
    int attr_pos[MSG_ATTRIBUTES];
    int attr_end[MSG_ATTRIBUTES];
@@ -46,7 +49,8 @@ void parse_msg(char *rad_msg){
         Serial.println("Attribute[i] not found");
       } 
    }
-   if (attr_found){
+   if (attr_found)
+   {
      for(int i = 0; i < MSG_ATTRIBUTES;i++){
        int end_pos = -1;
        Serial.println(i);
@@ -67,6 +71,15 @@ void parse_msg(char *rad_msg){
          Serial.println(attributes[i]);
        }
      }
+     for( int i = 0; i < NBR_COLLECTED_SENSORS; i++)
+     {   
+         if( attributes[0].equals(collect_sens[i].zone) &&
+            attributes[1].equals(collect_sens[i].sensor))
+         {
+            collect_sens[i].value = attributes[2].toFloat();
+            break;   
+         }
+     }    
    }
    else {
      Serial.println("Missing JSON tags");

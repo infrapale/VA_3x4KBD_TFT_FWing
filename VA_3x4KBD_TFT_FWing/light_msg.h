@@ -2,7 +2,7 @@
 #define __LIGHT_MSG_H__
 #include <Arduino.h>
 #include <Wire.h>
-#include <rfm69_support.h>
+//#include <rfm69_support.h>
 
 #define CODE_LEN      6
 #define ZONE_LEN      4
