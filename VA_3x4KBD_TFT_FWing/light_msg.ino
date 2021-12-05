@@ -39,7 +39,7 @@ void init_light_msg(void){
  * @param
  * @retval
  */
-void act_on_kbd3x4(char btn){
+void light_msg_action(char btn){
     char func[2] ="1";
     if (btn & 0b10000000)
     {
@@ -146,7 +146,7 @@ void radiate_msg( const char *zone, const char *relay_addr, char *func ) {
     char rf69_packet[RADIO433_MAX_MSG_LEN+1];
     if (json_char_array(rf69_packet, RADIO433_MAX_MSG_LEN, zone, relay_addr, func, "") > 0)
     {
-      radio_send_msg(rf69_packet);
+      radio433_send_msg(rf69_packet);
       Serial.println(rf69_packet);    
     }
     else 

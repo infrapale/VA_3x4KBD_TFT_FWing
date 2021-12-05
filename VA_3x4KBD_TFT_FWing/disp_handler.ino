@@ -24,7 +24,7 @@ void display_init(void)
     menu_is_active = false;
     tft.setRotation(3);
     tft.fillScreen(ILI9341_BLACK);
-    tft.setCursor(0, 24);
+    tft.setCursor(0, 26);
     tft.setTextColor(ILI9341_WHITE);  
     //tft.setTextSize(1);
     tft.setFont(&FreeSerif24pt7b);

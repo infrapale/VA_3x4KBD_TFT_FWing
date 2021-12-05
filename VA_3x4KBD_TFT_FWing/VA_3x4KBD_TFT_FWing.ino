@@ -131,6 +131,7 @@ TaHa radio_send_handle;
 TaHa radio_receive_handle;
 TaHa display_handle;
 TaHa local_sensor_handle;
+TaHa reset_radio433_handle;
 /**
  * @brief  Scan Analog Keyboard, pressed keys are stored in object buffer
  * @param  -
@@ -166,8 +167,8 @@ void setup() {
   Serial.begin(9600);
   Serial.println("VA_3x4KBD_TFT_FWing");
   //menu_init();
-  radio_init(RFM69_CS,RFM69_INT,RFM69_RST, RFM69_FREQ);
-  radio_send_msg("VA_3x4KBD_TFT_FWing");
+  radio433_init();
+  radio433_send_msg("VA_3x4KBD_TFT_FWing");
   init_light_msg();
   
   kbd3x4.set_nbr_keys(KBD_NBR_KEYS);
@@ -201,6 +202,8 @@ void setup() {
   radio_receive_handle.set_interval(10,RUN_RECURRING, radio_rx_handler);
   local_sensor_handle.set_interval(30000,RUN_RECURRING, read_local_sensors);
 
+  reset_radio433_handle.set_interval(20000,RUN_RECURRING, reset_radio_task);
+
  
 }
 /**
@@ -212,16 +215,18 @@ void loop() {
   char btn;
   
   taha_kbd_scan.run();
-  taha_btn_scan.run();
+  //taha_btn_scan.run();
   radio_send_handle.run();
   radio_receive_handle.run();
   local_sensor_handle.run();
   display_handle.run();
+  reset_radio433_handle.run();
 
   btn = kbd3x4.read();
   if (btn) {
     //Serial.println(btn);uint16_t aval = kbd3x4.rd_analog(); Serial.println(aval);
-    act_on_kbd3x4(btn);
+    light_msg_action(btn);
+    //radio433_print_registers();
   }
 
     /*
@@ -240,7 +245,7 @@ void radio_rx_handler(void)
       char buf[RADIO433_MAX_MSG_LEN+1];
       uint8_t len = sizeof(buf);
   
-      len = radio_read_msg(buf, RADIO433_MAX_MSG_LEN);
+      len = radio433_read_msg(buf, RADIO433_MAX_MSG_LEN);
       //if (rf69.recv(buf, &len)) {
       if (len>0)
       {
@@ -258,6 +263,10 @@ void radio_rx_handler(void)
      } 
 }
 
+void reset_radio_task(void)
+{
+     radio433_reset();
+}
 void read_local_sensors(void)
 {
     if (bme.performReading())

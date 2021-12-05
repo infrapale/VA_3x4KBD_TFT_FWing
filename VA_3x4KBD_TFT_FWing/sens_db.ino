@@ -6,9 +6,9 @@ sensor_entry_st sensor_info;
 
 sensor_entry_st collect_sens[NBR_COLLECTED_SENSORS] = {
     {"Tupa ","Tupa","Temp",24.2,"C",1},
-    {"Kost ","Tupa","Temp",22.1,"%",0},
+    {" ","Tupa","Temp",22.1,"%",0},
     {"Ulko ","OD_1","Temp",-1.0,"C",1},
-    {"Paine","OD_1","P_mb",990.0,"mBar",0}
+    {" ","OD_1","Hum",42.0,"%",0}
     
 };
 
